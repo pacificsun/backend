@@ -61,7 +61,7 @@
     "isomorphic-fetch": "^2.2.1",
     "jest": "^26.0.1",
     "jest-circus": "^26.3.0",
-    "jpeg-js": "^0.3.6",
+    "jpeg-js": "^0.4.0",
     "jwt-decode": "^2.2.0",
     "md5": "^2.2.1",
     "moment": "^2.24.0",
