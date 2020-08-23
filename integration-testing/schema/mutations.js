@@ -104,11 +104,27 @@ module.exports.setUserViewCountsHidden = gql`
 `
 
 module.exports.setUserDetails = gql`
-  mutation SetUserDetails($bio: String, $fullName: String, $photoPostId: ID, $username: String) {
-    setUserDetails(bio: $bio, fullName: $fullName, photoPostId: $photoPostId, username: $username) {
+  mutation SetUserDetails(
+    $bio: String
+    $dob: String
+    $gender: String
+    $fullName: String
+    $photoPostId: ID
+    $username: String
+  ) {
+    setUserDetails(
+      bio: $bio
+      fullName: $fullName
+      photoPostId: $photoPostId
+      username: $username
+      dob: $dob
+      gender: $gender
+    ) {
       userId
       username
       bio
+      dob
+      gender
       fullName
       photo {
         ...ImageFragment

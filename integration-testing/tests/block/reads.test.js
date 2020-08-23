@@ -43,6 +43,8 @@ test('Blocked user only see absolutely minimal profile of blocker via direct acc
     variables: {
       photoPostId: postId,
       bio: 'testing',
+      dob: '1995-05-05',
+      gender: 'Male',
       fullName: 'test test',
     },
   })

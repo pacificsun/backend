@@ -47,14 +47,18 @@ describe('Read and write properties our our own profile', () => {
     expect(resp.data.user.privacyStatus).toBe('PUBLIC')
   })
 
-  test('fullName and bio', async () => {
+  test('fullName, bio, gender and dob,',  async () => {
     const bio = "truckin'"
     const fullName = 'Hunter S.'
+    const dob="1995-05-05",
+    const gender = "Male"
     const {client, userId} = await loginCache.getCleanLogin()
 
     let resp = await client.query({query: queries.user, variables: {userId}})
     expect(resp.data.user.bio).toBeNull()
     expect(resp.data.user.fullName).toBeNull()
+    expect(resp.data.user.dob).toBeNull()
+    expect(resp.data.user.gender).toBeNull()
 
     // set to some custom values
     resp = await client.mutate({mutation: mutations.setUserDetails, variables: {bio, fullName}})
@@ -65,6 +69,16 @@ describe('Read and write properties our our own profile', () => {
     expect(resp.data.user.bio).toBe(bio)
     expect(resp.data.user.fullName).toBe(fullName)
 
+    // set to some custom values
+    resp = await client.mutate({mutation: mutations.setUserDetails, variables: {dob, gender}})
+    expect(resp.data.setUserDetails.dob).toBe(dob)
+    expect(resp.data.setUserDetails.gender).toBe(gender)
+
+    resp = await client.query({query: queries.user, variables: {userId}})
+    expect(resp.data.user.dob).toBe(dob)
+    expect(resp.data.user.gender).toBe(gender)
+
+
     // clear out the custom values
     resp = await client.mutate({mutation: mutations.setUserDetails, variables: {bio: '', fullName: ''}})
     expect(resp.data.setUserDetails.bio).toBeNull()
@@ -73,6 +87,14 @@ describe('Read and write properties our our own profile', () => {
     resp = await client.query({query: queries.user, variables: {userId}})
     expect(resp.data.user.bio).toBeNull()
     expect(resp.data.user.fullName).toBeNull()
+
+    resp = await client.mutate({mutation: mutations.setUserDetails, variables: {dob: '', gender: ''}})
+    expect(resp.data.setUserDetails.dob).toBeNull()
+    expect(resp.data.setUserDetails.gender).toBeNull()
+
+    resp = await client.query({query: queries.user, variables: {userId}})
+    expect(resp.data.user.dob).toBeNull()
+    expect(resp.data.user.gender).toBeNull()
   })
 })
 
@@ -86,6 +108,12 @@ test('Disabled user cannot setUserDetails', async () => {
 
   // verify can't edit our details
   await expect(client.mutate({mutation: mutations.setUserDetails, variables: {bio: 'a dog'}})).rejects.toThrow(
+    /ClientError: User .* is not ACTIVE/,
+  )
+  await expect(client.mutate({mutation: mutations.setUserDetails, variables: {dob: '1995-05-05'}})).rejects.toThrow(
+    /ClientError: User .* is not ACTIVE/,
+  )
+  await expect(client.mutate({mutation: mutations.setUserDetails, variables: {gender: 'Male'}})).rejects.toThrow(
     /ClientError: User .* is not ACTIVE/,
   )
 })
@@ -216,14 +244,16 @@ test('Read properties of another private user', async () => {
   // set up another user in cognito, mark them as private
   const theirBio = 'keeping calm and carrying on'
   const theirFullName = 'HG Wells'
-  const theirPhone = '+15105551000'
+  const thierDob = '1995-05=05'
+  const theirGender = 'Male'
+  const theirDob = '+15105551000'
   const {client: theirClient, userId: theirUserId, email: theirEmail} = await cognito.getAppSyncLogin(theirPhone)
   let variables = {privacyStatus: 'PRIVATE'}
   let resp = await theirClient.mutate({mutation: mutations.setUserPrivacyStatus, variables})
   expect(resp.data.setUserDetails.privacyStatus).toBe('PRIVATE')
   await theirClient.mutate({
     mutation: mutations.setUserDetails,
-    variables: {bio: theirBio, fullName: theirFullName},
+    variables: {bio: theirBio, fullName: theirFullName, dob: thierDob, gender: theirDob},
   })
 
   // verify they can see all their properties (make sure they're all set correctly)
@@ -234,6 +264,8 @@ test('Read properties of another private user', async () => {
   expect(user.privacyStatus).toBe('PRIVATE')
   expect(user.fullName).toBe(theirFullName)
   expect(user.bio).toBe(theirBio)
+  expect(user.gender).toBe(theirGender)
+  expect(user.dob).toBe(theirDob)
   expect(user.email).toBe(theirEmail)
   expect(user.phoneNumber).toBe(theirPhone)
 
@@ -245,6 +277,8 @@ test('Read properties of another private user', async () => {
   expect(user.privacyStatus).toBe('PRIVATE')
   expect(user.fullName).toBe(theirFullName)
   expect(user.bio).toBeNull()
+  expect(user.dob).toBeNull()
+  expect(user.gender).toBeNull()
   expect(user.email).toBeNull()
   expect(user.phoneNumber).toBeNull()
 
@@ -255,6 +289,8 @@ test('Read properties of another private user', async () => {
   expect(user.followedStatus).toBe('REQUESTED')
   expect(user.fullName).toBe(theirFullName)
   expect(user.bio).toBeNull()
+  expect(user.dob).toBeNull()
+  expect(user.gender).toBeNull()
   expect(user.email).toBeNull()
   expect(user.phoneNumber).toBeNull()
 
@@ -265,6 +301,8 @@ test('Read properties of another private user', async () => {
   expect(user.followedStatus).toBe('REQUESTED')
   expect(user.fullName).toBe(theirFullName)
   expect(user.bio).toBeNull()
+  expect(user.dob).toBeNull()
+  expect(user.gender).toBeNull()
   expect(user.email).toBeNull()
   expect(user.phoneNumber).toBeNull()
 
@@ -285,6 +323,8 @@ test('Read properties of another private user', async () => {
   expect(user.followedStatus).toBe('FOLLOWING')
   expect(user.fullName).toBe(theirFullName)
   expect(user.bio).toBe(theirBio)
+  expect(user.dob).toBe(theirDob)
+  expect(user.gender).toBe(theirGender)
   expect(user.email).toBeNull()
   expect(user.phoneNumber).toBeNull()
 
@@ -295,6 +335,8 @@ test('Read properties of another private user', async () => {
   expect(user.followedStatus).toBe('DENIED')
   expect(user.fullName).toBe(theirFullName)
   expect(user.bio).toBeNull()
+  expect(user.dob).toBeNull()
+  expect(user.gender).toBeNull()
   expect(user.email).toBeNull()
   expect(user.phoneNumber).toBeNull()
 
@@ -305,6 +347,8 @@ test('Read properties of another private user', async () => {
   expect(user.followedStatus).toBe('DENIED')
   expect(user.fullName).toBe(theirFullName)
   expect(user.bio).toBeNull()
+  expect(user.dob).toBeNull()
+  expect(user.gender).toBeNull()
   expect(user.email).toBeNull()
   expect(user.phoneNumber).toBeNull()
 
@@ -315,6 +359,8 @@ test('Read properties of another private user', async () => {
   expect(resp.data.user.followedStatus).toBe('NOT_FOLLOWING')
   expect(resp.data.user.fullName).toBe(theirFullName)
   expect(resp.data.user.bio).toBeNull()
+  expect(resp.data.user.dob).toBeNull()
+  expect(resp.data.user.gender).toBeNull()
   expect(resp.data.user.email).toBeNull()
   expect(resp.data.user.phoneNumber).toBeNull()
 })
@@ -325,11 +371,13 @@ test('Read properties of another public user', async () => {
   // set up another user in cognito, leave them as public
   const theirBio = 'keeping calm and carrying on'
   const theirFullName = 'HG Wells'
+  const theirDob = '1995-05-05'
+  const theirGender = 'Male'
   const theirPhone = '+14155551212'
   const {client: theirClient, userId: theirUserId, email: theirEmail} = await cognito.getAppSyncLogin(theirPhone)
   await theirClient.mutate({
     mutation: mutations.setUserDetails,
-    variables: {bio: theirBio, fullName: theirFullName},
+    variables: {bio: theirBio, fullName: theirFullName, dob: theirDob, gender: theirGender},
   })
 
   // verify they can see all their properties (make sure they're all set correctly)
@@ -340,6 +388,8 @@ test('Read properties of another public user', async () => {
   expect(user.privacyStatus).toBe('PUBLIC')
   expect(user.fullName).toBe(theirFullName)
   expect(user.bio).toBe(theirBio)
+  expect(user.dob).toBe(theirDob)
+  expect(user.gender).toBe(theirGender)
   expect(user.email).toBe(theirEmail)
   expect(user.phoneNumber).toBe(theirPhone)
 
@@ -350,6 +400,8 @@ test('Read properties of another public user', async () => {
   expect(user.followerStatus).toBe('NOT_FOLLOWING')
   expect(user.privacyStatus).toBe('PUBLIC')
   expect(user.bio).toBe(theirBio)
+  expect(user.dob).toBe(theirDob)
+  expect(user.gender).toBe(theirGender)
   expect(user.fullName).toBe(theirFullName)
   expect(user.email).toBeNull()
   expect(user.phoneNumber).toBeNull()
@@ -368,6 +420,8 @@ test('Read properties of another public user', async () => {
   expect(user.followerStatus).toBe('NOT_FOLLOWING')
   expect(user.privacyStatus).toBe('PUBLIC')
   expect(user.bio).toBe(theirBio)
+  expect(user.dob).toBe(theirDob)
+  expect(user.gender).toBe(theirGender)
   expect(user.fullName).toBe(theirFullName)
   expect(user.email).toBeNull()
   expect(user.phoneNumber).toBeNull()
