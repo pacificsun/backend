@@ -83,6 +83,12 @@
   response: Lambda.response.vtl
 
 - type: Mutation
+  field: swipeUser
+  dataSource: LambdaDataSource
+  request: Lambda.request.vtl
+  response: Lambda.response.vtl
+
+- type: Mutation
   field: setUserAcceptedEULAVersion
   dataSource: LambdaDataSource
   request: Lambda.request.vtl

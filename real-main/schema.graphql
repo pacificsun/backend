@@ -69,7 +69,7 @@ type Query {
 type Mutation {
   # For swipe Right to get next and Left for previous user
   #swipeEvent will be either Right or left
-  swipeUser(swipeEvent: String!): User
+  swipeUser(swipeEvent: String!, username: String, photoPostId: String): User
   # Set up a new user account
   createCognitoOnlyUser(username: String!, fullName: String): User
   createAppleUser(

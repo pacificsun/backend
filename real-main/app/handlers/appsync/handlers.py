@@ -238,6 +238,41 @@ def set_user_details(caller_user, arguments, source, context):
     )
     return caller_user.serialize(caller_user.id)
 
+@routes.register('Mutation.setUserDetails')
+@validate_caller
+def swipe_user(caller_user, arguments, source, context):
+    event = arguments.get('swipeEvent')
+    username = arguments.get('username')
+    photo_post_id = arguments.get('photoPostId')
+
+    args = (
+        event,
+        username,
+        photo_post_id
+    )
+    # if user event is Right next and if left previous
+    if all(v is None for v in args):
+        raise ClientException('Called without any arguments... probably not what you intended?')
+
+    # are we claiming a new username?
+    if username is not None:
+        try:
+            caller_user.update_username(username)
+        except UserException as err:
+            raise ClientException(str(err))
+
+    # are we setting a new profile picture?
+    if photo_post_id is not None:
+        post_id = photo_post_id if photo_post_id != '' else None
+        try:
+            caller_user.update_photo(post_id)
+        except UserException as err:
+            raise ClientException(str(err))
+
+    # update the simple properties
+   
+    return caller_user.serialize(caller_user.id)
+
 
 @routes.register('Mutation.setUserAcceptedEULAVersion')
 @validate_caller
